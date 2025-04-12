@@ -67,10 +67,31 @@ class _SignInPageState extends State<SignInPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Sign In')),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: _signInWithGoogle,
-          child: const Text('Continue with Google'),
+      body: Container(
+        color: Colors.grey[100],
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: _signInWithGoogle,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('web/icons/Icon-192.png', height: 24),
+                  const SizedBox(width: 8),
+                  const Text('Continue with Google'),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

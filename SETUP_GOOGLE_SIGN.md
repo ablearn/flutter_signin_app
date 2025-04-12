@@ -53,6 +53,15 @@ cd your_project_name
         3.  If you haven't registered an Android app during `flutterfire configure`, click "Add app" and select Android. Follow the instructions.
         4.  Download the `google-services.json` file.
         5.  Place the downloaded `google-services.json` file in the `android/app/` directory of your Flutter project.
+        6.  **Generate and Add SHA-1 Key:**
+            *   Generate the SHA-1 key for your Android app using the following command:
+                ```bash
+                keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
+                ```
+            *   If your keystore file is not located in the default location, you can find it by checking your Android Studio settings (File > Settings > Build, Execution, Deployment > Build Tools > Gradle).
+            *   The default password for the debug keystore is `android`.
+            *   Copy the SHA-1 key from the output.
+            *   Add the SHA-1 key to your Firebase project in the Firebase console (Project settings > General > Your apps > Android app > SHA certificate fingerprints).
     *   **iOS (Optional but Recommended):**
         1.  Go to Firebase Console -> Project Settings (gear icon) -> General tab.
         2.  If you haven't registered an iOS app during `flutterfire configure`, click "Add app" and select iOS. Follow the instructions.
@@ -201,7 +210,12 @@ These steps configure the OAuth Client ID used by Google Sign-In on the web.
     # For Web (Chrome)
     flutter run -d chrome
     ```
-3.  Click the "Continue with Google" button and follow the sign-in flow.
-4.  Check the debug console for any errors and verify successful navigation/authentication state change in your app.
+4.  To create an APK for testing on an Android device, run the following command:
+    ```bash
+    flutter build apk
+    ```
+    The APK will be located in the `build/app/outputs/apk/release/app-release.apk` directory.
+5.  Click the "Continue with Google" button and follow the sign-in flow.
+6.  Check the debug console for any errors and verify successful navigation/authentication state change in your app.
 
 This comprehensive guide should help set up Google Sign-In in future projects. Remember that package versions and cloud console layouts might change over time.
