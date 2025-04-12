@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "692561637812",
+    "project_id": "flutter-signin-nb",
+    "storage_bucket": "flutter-signin-nb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692561637812:android:9bf50bb5e535b8958a42e1",
+        "android_client_info": {
+          "package_name": "com.example.flutter_signin_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "692561637812-5os0f2k2itik11qlco6vqv3v3sshu7i0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuiE8p70rL11k0yYcsCFdTTc2b-Ae3_IY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "692561637812-5os0f2k2itik11qlco6vqv3v3sshu7i0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
