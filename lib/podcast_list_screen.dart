@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart'; // Import kIsWeb
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:audioplayers/audioplayers.dart'; // Import audioplayers
 import 'package:firebase_storage/firebase_storage.dart'; // Import Firebase Storage
+import 'package:just_audio/just_audio.dart'; // Import just_audio
+import 'package:rxdart/rxdart.dart'; // Import rxdart
 
 class PodcastListScreen extends StatefulWidget {
   final String chapterId;
@@ -20,7 +21,8 @@ class PodcastListScreen extends StatefulWidget {
 
 class _PodcastListScreenState extends State<PodcastListScreen> {
   late Future<QuerySnapshot> _podcastsFuture;
-  final AudioPlayer audioPlayer = AudioPlayer(); // Create an instance
+  final player = AudioPlayer(); // Create an instance
+  bool isPlaying = false;
 
   @override
   void initState() {
@@ -38,7 +40,7 @@ class _PodcastListScreenState extends State<PodcastListScreen> {
 
   @override
   void dispose() {
-    audioPlayer.dispose(); // Dispose the player when the widget is removed
+    player.dispose(); // Dispose the player when the widget is removed
     super.dispose();
   }
 
@@ -84,51 +86,59 @@ class _PodcastListScreenState extends State<PodcastListScreen> {
 
                 return ListTile(
                   title: Text(podcastTitle),
-                  leading: const Icon(Icons.audiotrack), // Add an icon
-                  onTap: () async {
-                    // Play the podcast
-                    if (audioUrl != null) {
-                      String finalAudioUrl = audioUrl;
-                      if (audioUrl.startsWith("gs://")) {
-                        // It's a Firebase Storage URL, get the download URL
+                  leading: IconButton(
+                    icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                    onPressed: () async {
+                      // Play the podcast
+                      if (audioUrl != null) {
+                        String finalAudioUrl = audioUrl;
+                        if (audioUrl.startsWith("gs://")) {
+                          // It's a Firebase Storage URL, get the download URL
+                          try {
+                            final ref = FirebaseStorage.instance.refFromURL(
+                              audioUrl,
+                            );
+                            finalAudioUrl = await ref.getDownloadURL();
+                          } catch (e) {
+                            print('Error getting download URL: $e');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Error getting download URL: ${e.toString()}',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                        }
                         try {
-                          final ref = FirebaseStorage.instance.refFromURL(
-                            audioUrl,
-                          );
-                          finalAudioUrl = await ref.getDownloadURL();
+                          await player.setUrl(finalAudioUrl);
+                          if (isPlaying) {
+                            await player.pause();
+                            setState(() {
+                              isPlaying = false;
+                            });
+                          } else {
+                            await player.play();
+                            setState(() {
+                              isPlaying = true;
+                            });
+                          }
                         } catch (e) {
-                          print('Error getting download URL: $e');
+                          print('Error playing podcast: $e');
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                'Error getting download URL: ${e.toString()}',
-                              ),
+                              content: Text('Error playing: ${e.toString()}'),
                             ),
                           );
-                          return;
                         }
-                      }
-                      try {
-                        // Force HTML5 player on web
-                        if (kIsWeb) {
-                          await audioPlayer.play(UrlSource(finalAudioUrl));
-                        } else {
-                          await audioPlayer.play(UrlSource(finalAudioUrl));
-                        }
-                      } catch (e) {
-                        print('Error playing podcast: $e');
+                      } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error playing: ${e.toString()}'),
-                          ),
+                          const SnackBar(content: Text('Audio URL not found.')),
                         );
                       }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Audio URL not found.')),
-                      );
-                    }
-                  },
+                    },
+                  ),
                 );
               },
             );

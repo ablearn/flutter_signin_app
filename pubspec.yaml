@@ -41,6 +41,7 @@ dependencies:
   cloud_firestore: ^5.0.0 # Added for Firestore database
   audioplayers: ^5.2.1 # Add audio player
   firebase_storage: 12.4.5 # Add Firebase Storage
+  just_audio: ^0.9.46
 
 dev_dependencies:
   flutter_test:
