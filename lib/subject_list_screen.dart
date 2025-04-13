@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'unit_list_screen.dart'; // Import the new screen
 
 class SubjectListScreen extends StatefulWidget {
   final String gradeDocId; // Changed from grade to gradeDocId
@@ -70,12 +71,22 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                     subjects[index].data() as Map<String, dynamic>;
                 final subjectName =
                     subjectData['subject'] as String? ?? 'Unnamed Subject';
+                final subjectId = subjects[index].id; // Get the document ID
 
                 // Create the icon with text overlay
                 return GestureDetector(
                   onTap: () {
-                    // TODO: Implement navigation to units/chapters for this subject
-                    print('Tapped on $subjectName');
+                    // Navigate to UnitListScreen, passing subject ID and name
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => UnitListScreen(
+                              subjectId: subjectId,
+                              subjectName: subjectName,
+                            ),
+                      ),
+                    );
                   },
                   child: Card(
                     // Use Card for elevation/border
