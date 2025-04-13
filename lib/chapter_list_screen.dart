@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'podcast_list_screen.dart'; // Import the new screen
 
 class ChapterListScreen extends StatefulWidget {
   final String unitId;
@@ -70,13 +71,26 @@ class _ChapterListScreenState extends State<ChapterListScreen> {
                     chapters[index].data() as Map<String, dynamic>;
                 final chapterName =
                     chapterData['chapter'] as String? ?? 'Unnamed Chapter';
+                final chapterId = chapters[index].id;
 
-                return ListTile(
-                  title: Text(chapterName),
-                  // Optional: Add onTap to navigate further (e.g., to content)
-                  // onTap: () {
-                  //   // Navigate to content screen, passing chapter details
-                  // },
+                return GestureDetector(
+                  onTap: () {
+                    // Navigate to PodcastListScreen, passing chapter ID and name
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => PodcastListScreen(
+                              chapterId: chapterId,
+                              chapterName: chapterName,
+                            ),
+                      ),
+                    );
+                  },
+                  child: ListTile(
+                    leading: const Icon(Icons.book), // Add an icon
+                    title: Text(chapterName),
+                  ),
                 );
               },
             );
