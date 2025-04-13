@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'chapter_list_screen.dart'; // Import the new screen
 
 class UnitListScreen extends StatefulWidget {
   final String subjectId;
@@ -59,22 +60,68 @@ class _UnitListScreenState extends State<UnitListScreen> {
               );
             }
 
-            // Data is available, build the list
+            // Data is available, build the grid
             final units = snapshot.data!.docs;
 
-            return ListView.builder(
+            return GridView.builder(
+              padding: const EdgeInsets.all(16.0),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 180.0,
+                crossAxisSpacing: 16.0,
+                mainAxisSpacing: 16.0,
+                childAspectRatio: 1.0,
+              ),
               itemCount: units.length,
               itemBuilder: (context, index) {
-                // Extract unit name - assuming the field is named 'unit'
                 final unitData = units[index].data() as Map<String, dynamic>;
                 final unitName = unitData['unit'] as String? ?? 'Unnamed Unit';
+                final unitId = units[index].id; // Get the unit document ID
 
-                return ListTile(
-                  title: Text(unitName),
-                  // Optional: Add onTap to navigate further (e.g., to chapters)
-                  // onTap: () {
-                  //   // Navigate to chapters screen, passing unit details
-                  // },
+                return GestureDetector(
+                  onTap: () {
+                    // Navigate to ChapterListScreen, passing unit ID and name
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => ChapterListScreen(
+                              unitId: unitId,
+                              unitName: unitName,
+                            ),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    elevation: 4.0,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        Icon(
+                          Icons.description, // Or another suitable icon
+                          size: 80.0,
+                          color: Colors.orange,
+                        ),
+                        Container(
+                          color: Colors.black.withOpacity(0.5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          child: Text(
+                            unitName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             );
