@@ -1,6 +1,6 @@
-# Setting Up Google Sign-In with Firebase in Flutter
+# Building a K12 Podcast App with Google Sign-In and Firebase in Flutter
 
-This guide details the steps required to integrate Google Sign-In into a Flutter application using Firebase Authentication, covering setup for Android and Web platforms, including common troubleshooting steps.
+This guide details the steps required to integrate Google Sign-In into a Flutter application and extend it to build a podcast app for K12 students using Firebase Authentication and Firestore.
 
 ## 1. Prerequisites
 
@@ -71,15 +71,19 @@ cd your_project_name
 ## 5. Add Dependencies
 
 1.  Open the `pubspec.yaml` file in your Flutter project.
-2.  Add the following Firebase and Google Sign-In packages under the `dependencies:` section (use versions known to work together, like the ones below, or check pub.dev for the latest compatible versions):
+2.  Add the following packages under the `dependencies:` section:
+
     ```yaml
     dependencies:
       flutter:
         sdk: flutter
       # ... other dependencies
+      cupertino_icons: ^1.0.8
       firebase_core: ^3.13.0  # Or latest compatible
       firebase_auth: ^5.5.2  # Or latest compatible
       google_sign_in: ^6.3.0 # Or latest compatible
+      cloud_firestore: ^5.0.0 # Added for Firestore database
+      audioplayers: ^5.2.1 # Add audio player
     ```
 3.  Save the `pubspec.yaml` file.
 4.  Run `flutter pub get` in your terminal within the project directory.
@@ -88,6 +92,7 @@ cd your_project_name
 ## 6. Implement Flutter Code
 
 1.  **Initialize Firebase:** Modify your `lib/main.dart` file to initialize Firebase before running the app:
+
     ```dart
     import 'package:flutter/material.dart';
     import 'package:firebase_core/firebase_core.dart';
@@ -102,67 +107,64 @@ cd your_project_name
     }
     ```
 
-2.  **Create Sign-In UI:** Design your sign-in page (e.g., `SignInPage` widget) with a "Continue with Google" button.
+2.  **Google Sign-In and User Details Collection:**
 
-3.  **Implement Google Sign-In Logic:** Add the function to handle the sign-in flow:
-    ```dart
-    import 'package:firebase_auth/firebase_auth.dart';
-    import 'package:google_sign_in/google_sign_in.dart';
-    import 'package:flutter/foundation.dart' show kIsWeb; // For potential web-specific logic if needed
+    *   After successful Google Sign-In, collect the user's name and grade.
+    *   Store this information (along with other user details) in a "users" collection in Firestore.
+    *   The code navigates to `UserDetailsForm` to collect this information.
 
-    // Inside your SignInPage State class:
+3.  **Data Flow and UI Structure:**
 
-    Future<void> _signInWithGoogle() async {
-      try {
-        // Initialize GoogleSignIn.
-        // For web, the clientId is usually handled by the meta tag in index.html.
-        // If issues persist on web, you might need to pass clientId explicitly:
-        // final GoogleSignIn googleSignIn = GoogleSignIn(clientId: kIsWeb ? YOUR_WEB_CLIENT_ID : null);
-        final GoogleSignIn googleSignIn = GoogleSignIn();
+    *   **Grade Display:** After submitting user details, display the selected grade with a graduation hat icon.
+    *   **Subjects List:** Tapping the grade icon navigates to a `SubjectListScreen`, displaying available subjects as icons in a `GridView`.
+    *   **Units List:** Tapping a subject navigates to a `UnitListScreen`, displaying units for that subject as icons in a `GridView`.
+    *   **Chapters List:** Tapping a unit navigates to a `ChapterListScreen`, displaying chapters for that unit in a `ListView`.
+    *   **Podcast List:** Tapping a chapter navigates to a `PodcastListScreen`, displaying podcasts for that chapter in a `ListView`.
+    *   **Podcast Playback:** Tapping a podcast item initiates audio playback using the `audioplayers` package.
 
-        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+## 7. Firestore Security Rules
 
-        if (googleUser == null) {
-          // User cancelled the sign-in
-          print('Google Sign-In cancelled by user.');
-          return;
-        }
+Configure Firestore security rules to protect your data. The following rules allow authenticated users to:
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+*   Read and write their own document in the `users` collection.
+*   Read data from the `grades`, `subjects`, `units`, and `chapters` collections.
 
-        final OAuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-
-        // Sign in to Firebase with the credential
-        final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-
-        print('Successfully signed in with Google: ${userCredential.user?.displayName}');
-
-        // Navigate to home screen or handle successful sign-in
-        // Example:
-        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
-
-      } catch (e) {
-        print("Error signing in with Google: $e");
-        // Handle errors appropriately (e.g., show a snackbar)
-        // Check console for specific PlatformExceptions like 'network_error', 'popup_closed_by_user', etc.
-      }
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-
-    // Call _signInWithGoogle() when the button is pressed.
-    ```
-
-## 7. Firebase Authentication Configuration
-
-1.  Go to the [Firebase Console](https://console.firebase.google.com/) and select your project.
-2.  Navigate to **Build** > **Authentication**.
-3.  Click the **Sign-in method** tab.
-4.  Find the **Google** provider in the list and click the pencil icon (edit) or enable it if it's disabled.
-5.  Ensure the provider is **Enabled**.
-6.  Select a **Project support email** from the dropdown.
-7.  Click **Save**.
+    // Allow any authenticated user to READ from the grades collection
+    match /grades/{gradeId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    // Allow any authenticated user to READ from the subjects collection
+    match /subjects/{subjectId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    // Allow any authenticated user to READ from the units collection
+    match /units/{unitId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    // Allow any authenticated user to READ from the chapters collection
+    match /chapters/{chapterId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+        // Allow any authenticated user to READ from the podcasts collection
+    match /podcasts/{podcastId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}
+```
 
 ## 8. Google Cloud Console Configuration (Crucial for Web)
 
@@ -218,4 +220,4 @@ These steps configure the OAuth Client ID used by Google Sign-In on the web.
 5.  Click the "Continue with Google" button and follow the sign-in flow.
 6.  Check the debug console for any errors and verify successful navigation/authentication state change in your app.
 
-This comprehensive guide should help set up Google Sign-In in future projects. Remember that package versions and cloud console layouts might change over time.
+This comprehensive guide should help set up Google Sign-In and build a K12 podcast app in future projects. Remember that package versions and cloud console layouts might change over time.
