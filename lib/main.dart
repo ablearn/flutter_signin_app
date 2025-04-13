@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
+import 'user_details_form.dart'; // Import the new form screen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,10 +53,12 @@ class _SignInPageState extends State<SignInPage> {
 
       await FirebaseAuth.instance.signInWithCredential(credential);
 
-      // Navigate to a new screen after successful sign-in
+      // Navigate to the UserDetailsForm screen after successful sign-in
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => const UserDetailsForm(),
+        ), // Navigate to UserDetailsForm
       );
     } catch (e) {
       print("Error signing in with Google: $e");
