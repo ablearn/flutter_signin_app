@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart'; // Import kIsWeb
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:audioplayers/audioplayers.dart'; // Import audioplayers
+import 'package:firebase_storage/firebase_storage.dart'; // Import Firebase Storage
 
 class PodcastListScreen extends StatefulWidget {
   final String chapterId;
@@ -86,8 +88,33 @@ class _PodcastListScreenState extends State<PodcastListScreen> {
                   onTap: () async {
                     // Play the podcast
                     if (audioUrl != null) {
+                      String finalAudioUrl = audioUrl;
+                      if (audioUrl.startsWith("gs://")) {
+                        // It's a Firebase Storage URL, get the download URL
+                        try {
+                          final ref = FirebaseStorage.instance.refFromURL(
+                            audioUrl,
+                          );
+                          finalAudioUrl = await ref.getDownloadURL();
+                        } catch (e) {
+                          print('Error getting download URL: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Error getting download URL: ${e.toString()}',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                      }
                       try {
-                        await audioPlayer.play(UrlSource(audioUrl));
+                        // Force HTML5 player on web
+                        if (kIsWeb) {
+                          await audioPlayer.play(UrlSource(finalAudioUrl));
+                        } else {
+                          await audioPlayer.play(UrlSource(finalAudioUrl));
+                        }
                       } catch (e) {
                         print('Error playing podcast: $e');
                         ScaffoldMessenger.of(context).showSnackBar(
