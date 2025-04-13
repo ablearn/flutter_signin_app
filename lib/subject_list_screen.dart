@@ -53,24 +53,65 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
               );
             }
 
-            // Data is available, build the list
+            // Data is available, build the grid
             final subjects = snapshot.data!.docs;
 
-            return ListView.builder(
+            return GridView.builder(
+              padding: const EdgeInsets.all(16.0), // Keep padding
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 180.0, // Max width for each item
+                crossAxisSpacing: 16.0, // Spacing between columns
+                mainAxisSpacing: 16.0, // Spacing between rows
+                childAspectRatio: 1.0, // Keep aspect ratio (square items)
+              ),
               itemCount: subjects.length,
               itemBuilder: (context, index) {
-                // Extract subject name - assuming the field is named 'subject'
                 final subjectData =
                     subjects[index].data() as Map<String, dynamic>;
                 final subjectName =
                     subjectData['subject'] as String? ?? 'Unnamed Subject';
 
-                return ListTile(
-                  title: Text(subjectName),
-                  // Optional: Add onTap to navigate further (e.g., to units/chapters)
-                  // onTap: () {
-                  //   // Navigate to units screen, passing subject details
-                  // },
+                // Create the icon with text overlay
+                return GestureDetector(
+                  onTap: () {
+                    // TODO: Implement navigation to units/chapters for this subject
+                    print('Tapped on $subjectName');
+                  },
+                  child: Card(
+                    // Use Card for elevation/border
+                    elevation: 4.0,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        // Book Icon
+                        Icon(
+                          Icons.menu_book, // Book icon
+                          size: 80.0, // Adjust size as needed
+                          color: Colors.teal, // Adjust color
+                        ),
+                        // Subject Name Text
+                        Container(
+                          // Background for text readability
+                          color: Colors.black.withOpacity(0.5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          child: Text(
+                            subjectName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16, // Adjust font size
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2, // Allow wrapping
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             );
