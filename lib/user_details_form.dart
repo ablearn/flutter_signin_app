@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'main.dart'; // To navigate to HomeScreen
+import 'grade_display_screen.dart'; // Import the new screen
+// import 'main.dart'; // No longer navigating directly to HomeScreen from here
 
 class UserDetailsForm extends StatefulWidget {
   const UserDetailsForm({Key? key}) : super(key: key);
@@ -41,27 +42,65 @@ class _UserDetailsFormState extends State<UserDetailsForm> {
         return;
       }
 
-      final userData = {
-        'name': _nameController.text.trim(),
-        'grade': _gradeController.text.trim(),
-        'email': user.email, // Get email from the authenticated user
-        'subscriptionPlanCode': 'FREE', // Hardcoded as requested
-        'userType': 'STUDENT', // Hardcoded as requested
-      };
+      final gradeString = _gradeController.text.trim();
+      final nameString = _nameController.text.trim();
 
       try {
+        // 1. Find the grade document reference
+        final gradeQuery =
+            await FirebaseFirestore.instance
+                .collection('grades')
+                .where('grade', isEqualTo: gradeString)
+                .limit(1)
+                .get();
+
+        if (gradeQuery.docs.isEmpty) {
+          // No matching grade found in the 'grades' collection
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid grade entered. Please check.'),
+            ),
+          );
+          setState(() {
+            _isLoading = false;
+          });
+          return; // Stop execution if grade is invalid
+        }
+
+        final gradeDocRef =
+            gradeQuery.docs.first.reference; // Get the DocumentReference
+
+        // 2. Prepare user data with the grade reference
+        final userData = {
+          'name': nameString,
+          'email': user.email, // Get email from the authenticated user
+          'subscriptionPlanCode': 'FREE', // Hardcoded as requested
+          'userType': 'STUDENT', // Hardcoded as requested
+          'gradeRef': gradeDocRef, // Store the reference to the grade document
+        };
+
+        // 3. Save user data
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid) // Use user's UID as document ID
             .set(userData);
 
-        // Navigate to HomeScreen after successful save
+        // 4. Navigate to GradeDisplayScreen after successful save
+        // Pass both the grade string (for display) and the grade document ID (for querying subjects later)
+        final gradeDocId = gradeDocRef.id;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(
+            builder:
+                (context) => GradeDisplayScreen(
+                  grade: gradeString, // For display on GradeDisplayScreen
+                  gradeDocId: gradeDocId, // To be passed to SubjectListScreen
+                ),
+          ),
         );
       } catch (e) {
-        print("Error saving user details: $e");
+        // Handle potential errors during Firestore query or save
+        print("Error saving user details or querying grades: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving details: ${e.toString()}')),
         );
